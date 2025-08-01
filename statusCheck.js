@@ -3,7 +3,7 @@
 
 import { config } from './utils/configLoader.js';
 
-export async function checkBackendStatus() {
+export default async function checkBackendStatus() {
   try {
     const res = await fetch(config.SYNC_ENDPOINT + "/status", {
       method: "GET",
