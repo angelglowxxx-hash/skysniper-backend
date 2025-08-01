@@ -1,7 +1,7 @@
 // SkySniper — statusCheck.js v1.0
 // 🔍 Checks backend health and sync status
 
-import { config } from './configLoader.js';
+import { config } from './utils/configLoader.js';
 
 export async function checkBackendStatus() {
   try {
