@@ -1,5 +1,5 @@
-// SkySniper — server.js v1.3
-// 🧠 Modular backend API for AI prediction, hash decode, fingerprint memory, Supabase sync
+// SkySniper — server.js v1.4
+// 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
 
 import express from 'express';
 import cors from 'cors';
@@ -19,6 +19,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ✅ Serve static assets (CSS, images, etc.)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Set up EJS view engine for admin panel
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 const PORT = process.env.PORT || 8080;
 
