@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkySniper Admin Panel</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      padding: 2rem;
+    }
+    h1, h2 {
+      color: #ff0055;
+    }
+    section {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #333;
+      padding-bottom: 1rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 4px;
+    }
+    input {
+      width: 300px;
+    }
+    button {
+      background: #ff0055;
+      color: #fff;
+      cursor: pointer;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      margin-bottom: 0.5rem;
+      background: #1a1a1a;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    pre {
+      background: #1a1a1a;
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 SkySniper Admin Panel</h1>
+
+  <section>
+    <h2>🔧 System Info</h2>
+    <p><strong>AI Model:</strong> <%= ai_model %></p>
+    <p><strong>Supabase:</strong> <%= supabase_url %></p>
+    <p><strong>Backend:</strong> <%= backend_url %></p>
+  </section>
+
+  <section>
+    <h2>🔍 Fingerprints</h2>
+    <ul>
+      <% fingerprints.forEach(fp => { %>
+        <li>
+          <strong>Site:</strong> <%= fp.site_url %><br />
+          <strong>Game:</strong> <%= fp.game %><br />
+          <strong>Modules:</strong> <%= fp.modules.join(", ") %>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🎯 Push Config via AI</h2>
+    <form method="POST" action="/admin/pushConfig">
+      <input name="site_url" placeholder="Site URL" required />
+      <input name="game" placeholder="Game Name" required />
+      <button type="submit">Push Config</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>📊 Latest Predictions</h2>
+    <ul>
+      <% rounds.forEach(r => { %>
+        <li>
+          <strong>Round:</strong> <%= r.round_id %><br />
+          <strong>Multiplier:</strong> <%= r.multiplier %><br />
+          <strong>Prediction:</strong> <%= r.next_prediction %><br />
+          <strong>Tag:</strong> <%= r.tag %>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🧪 Diagnostics</h2>
+    <pre><%= JSON.stringify(diagnostics, null, 2) %></pre>
+  </section>
+</body>
+</html>
