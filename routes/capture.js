@@ -2,12 +2,12 @@
 // 📡 Receives DOM + network data, triggers AI, logs to Supabase, returns HUD payload
 
 import express from 'express';
-import fetch from 'node-fetch';
-const router = express.Router();
+import { getPrediction } from '../utils/aiClient.js';
+import { syncRound } from '../utils/dbClient.js';
+import { storeFingerprint } from '../utils/fingerprintBuilder.js';
+import { logDiagnostics } from '../utils/diagnostics.js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const router = express.Router();
 
 router.post("/", async (req, res) => {
   const {
@@ -28,71 +28,43 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // 🔮 Build AI prompt
-    const prompt = `
-Crash Game Round:
-- Site: ${site_url}
-- Game: ${game}
-- Round ID: ${roundId}
-- Hash: ${hash}
-- Result: ${result || multiplier}x
+    // 🧠 Fingerprint Memory
+    await storeFingerprint({ site_url, game, hash, url });
 
-Is this round fair? Decode the hash. Predict next multiplier. Tag it safe/unsafe. Analyze pattern.
-Return:
-- decoded hash
-- next_prediction
-- safety tag
-- pattern analysis
-`;
-
-    // 🔮 Gemini AI Request
-    const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+    // 🔮 AI Prediction
+    const { decoded, next_prediction, tag, pattern, ai_confidence } = await getPrediction({
+      site_url, game, roundId, hash, multiplier, result
     });
 
-    const aiData = await aiRes.json();
-    const output = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "AI response unavailable";
-
-    // 🧠 Parse AI output
-    const decoded = output.match(/decoded.*?:\s*(.*)/i)?.[1] || "N/A";
-    const next_prediction = output.match(/next_prediction.*?:\s*(.*)/i)?.[1] || "N/A";
-    const tag = output.match(/tag.*?:\s*(.*)/i)?.[1] || "N/A";
-    const pattern = output.match(/pattern.*?:\s*(.*)/i)?.[1] || "N/A";
-
-    // ☁️ Log to Supabase
-    const supabaseRes = await fetch(`${SUPABASE_URL}/rest/v1/predictions`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=representation"
-      },
-      body: JSON.stringify({
-        site_url,
-        game,
-        round_id: roundId,
-        hash,
-        multiplier,
-        result,
-        decoded,
-        next_prediction,
-        tag,
-        pattern,
-        type,
-        url,
-        network_response: networkResponse,
-        timestamp: timestamp || new Date().toISOString()
-      })
+    // ☁️ Supabase Logging
+    const dbResult = await syncRound({
+      site_url,
+      game,
+      roundId,
+      hash,
+      multiplier,
+      result,
+      decoded,
+      next_prediction,
+      tag,
+      pattern,
+      type,
+      url,
+      network_response: networkResponse,
+      timestamp: timestamp || new Date().toISOString()
     });
 
-    const dbResult = await supabaseRes.json();
+    // 🧪 Diagnostics Overlay
+    await logDiagnostics({
+      route: "capture",
+      status: "success",
+      roundId,
+      multiplier,
+      prediction: next_prediction,
+      tag
+    });
 
-    // ✅ Return HUD-ready payload
+    // ✅ HUD Payload
     res.json({
       site_url,
       game,
@@ -104,6 +76,8 @@ Return:
       next_prediction,
       tag,
       pattern,
+      fingerprint_id: `fp-${hash.slice(0, 8)}`,
+      ai_confidence: ai_confidence || "high",
       timestamp: new Date().toISOString()
     });
 
