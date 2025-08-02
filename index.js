@@ -1,10 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import decode from './api/decode.js';
-import statusCheck from './statusCheck.js';
-import syncRound from './syncRound.js';
-import { createServer } from 'http';
-import { Server as SocketIO } from 'socket.io';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import decode from "./api/decode.js";
+import statusCheck from "./statusCheck.js";
+import syncRound from "./syncRound.js";
+import { createServer } from "http";
+import { Server as SocketIO } from "socket.io";
+import axios from "axios";
+
+dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
@@ -13,11 +17,11 @@ const io = new SocketIO(httpServer, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
-// In-memory logs/errors for dashboard (replace with DB for production)
+// Memory log for dashboard (demo)
 let apiLogs = [];
 let apiErrors = [];
+let extensionEvents = [];
 
-// Middleware to log requests/errors
 app.use((req, res, next) => {
   if (!req.url.startsWith("/dashboard-assets")) {
     apiLogs.push({
@@ -32,53 +36,52 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health/info endpoints
-app.get('/', (req, res) => {
-  res.send('<span style="color:green;font-size:2em;">🟢 SkySniper Backend API is Running!</span>');
+app.get("/", (req, res) => {
+  res.send('<span style="color:green;font-size:2em;">🟢 SkySniper API Running!</span>');
 });
-app.get('/status', statusCheck);
+app.get("/status", statusCheck);
+app.get("/dashboard", (req, res) => res.sendFile(process.cwd() + "/dashboard.html"));
+app.get("/dashboard-assets/:file", (req, res) => res.sendFile(process.cwd() + "/dashboard-assets/" + req.params.file));
+app.get("/dashboard-api/logs", (req, res) => res.json({ logs: apiLogs.slice(-200) }));
+app.get("/dashboard-api/errors", (req, res) => res.json({ errors: apiErrors.slice(-50) }));
+app.get("/dashboard-api/extensions", (req, res) => res.json({ events: extensionEvents.slice(-100) }));
 
-// API endpoints
-app.get('/decode', (req, res) => {
-  res.status(405).send('This endpoint only supports POST requests for decoding.');
+// AI error assistant endpoint
+app.post("/ai/assist", async (req, res) => {
+  try {
+    const { error, context } = req.body;
+    const prompt = `Error: ${error}\nContext: ${context}\nSuggest solution and explain.`;
+    const aiRes = await axios.post(process.env.AI_MODEL_URL, {
+      model: process.env.AI_MODEL_NAME,
+      messages: [{ role: "user", content: prompt }]
+    }, {
+      headers: { Authorization: `Bearer ${process.env.AI_API_KEY}` }
+    });
+    res.json({ suggestion: aiRes.data.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: "AI assist failed", detail: err.message });
+  }
 });
-app.post('/decode', decode);
-app.post('/syncRound', syncRound);
 
-// Dashboard routes (static assets)
-app.get('/dashboard', (req, res) => {
-  res.sendFile(process.cwd() + '/dashboard.html');
-});
-app.get('/dashboard-assets/:file', (req, res) => {
-  res.sendFile(process.cwd() + '/dashboard-assets/' + req.params.file);
-});
+// Core API
+app.post("/decode", decode);
+app.post("/syncRound", syncRound);
 
-// Dashboard API for fetching logs/status/errors/env
-app.get('/dashboard-api/logs', (req, res) => {
-  res.json({ logs: apiLogs.slice(-200) });
-});
-app.get('/dashboard-api/errors', (req, res) => {
-  res.json({ errors: apiErrors.slice(-50) });
-});
-app.get('/dashboard-api/status', (req, res) => {
-  res.json({
-    status: "ok",
-    uptime: process.uptime(),
-    env: {
-      NODE_ENV: process.env.NODE_ENV,
-      AI_MODEL_NAME: process.env.AI_MODEL_NAME,
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SYNC_ENDPOINT: process.env.SYNC_ENDPOINT
-    }
+// Extension/Socket.io connection
+io.on("connection", socket => {
+  socket.on("extension_event", data => {
+    extensionEvents.push({ ...data, time: new Date().toISOString() });
+    if (extensionEvents.length > 100) extensionEvents.shift();
+    io.emit("dashboard_extension_event", data); // update dashboard in real time
   });
+  socket.on("disconnect", () => {});
 });
 
-// 404 and error handler
+// Error handling
 app.use((req, res) => {
-  res.status(404).send('❌ Endpoint not found. See /status for API health.');
+  res.status(404).send("❌ Endpoint not found. See /status for API health.");
 });
 app.use((err, req, res, next) => {
-  console.error('❗ Server Error:', err);
   apiErrors.push({
     message: err.message,
     stack: err.stack,
@@ -87,7 +90,7 @@ app.use((err, req, res, next) => {
   });
   if (apiErrors.length > 50) apiErrors.shift();
   io.emit("api_error", apiErrors[apiErrors.length - 1]);
-  res.status(500).json({ status: 'error', message: err.message || 'Internal Server Error' });
+  res.status(500).json({ status: "error", message: err.message || "Internal Server Error" });
 });
 
 const PORT = process.env.PORT || 3000;
