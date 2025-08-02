@@ -52,10 +52,15 @@
       border-radius: 6px;
       overflow-x: auto;
     }
+    .empty {
+      color: #888;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
   <h1>🧠 SkySniper Admin Panel</h1>
+  <p><small><%= diagnostics.timestamp %></small></p>
 
   <section>
     <h2>🔧 System Info</h2>
@@ -77,7 +82,7 @@
         <% }) %>
       </ul>
     <% } else { %>
-      <p>No fingerprints found.</p>
+      <p class="empty">No fingerprints found.</p>
     <% } %>
   </section>
 
@@ -104,7 +109,7 @@
         <% }) %>
       </ul>
     <% } else { %>
-      <p>No predictions available.</p>
+      <p class="empty">No predictions available.</p>
     <% } %>
   </section>
 
