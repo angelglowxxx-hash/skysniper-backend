@@ -1,12 +1,19 @@
-// SkySniper — server.js v1.2
+// SkySniper — server.js v1.3
 // 🧠 Modular backend API for AI prediction, hash decode, fingerprint memory, Supabase sync
 
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
+
+// Resolve __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Initialize app
 const app = express();
@@ -15,21 +22,16 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
 
-// 🔗 Route Imports
-import decodeRoute from './routes/decode.js';
-import predictRoute from './routes/predict.js';
-import syncRoundRoute from './routes/syncRound.js';
-import statusRoute from './routes/status.js';
-import captureRoute from './routes/capture.js';
-import gameConfigRoute from './routes/gameConfig.js';
-
-// 🧩 Mount Routes
-app.use("/decode", decodeRoute);
-app.use("/predict", predictRoute);
-app.use("/syncRound", syncRoundRoute);
-app.use("/status", statusRoute);
-app.use("/capture", captureRoute);
-app.use("/gameConfig", gameConfigRoute);
+// 🔗 Auto-load all routes from /routes
+const routesPath = path.join(__dirname, 'routes');
+fs.readdirSync(routesPath).forEach(async file => {
+  if (file.endsWith('.js')) {
+    const routeModule = await import(`./routes/${file}`);
+    const routeName = '/' + file.replace('.js', '');
+    app.use(routeName, routeModule.default);
+    console.log(`🔗 Mounted route: ${routeName}`);
+  }
+});
 
 // 🛡️ Error Handling
 process.on("uncaughtException", err => {
