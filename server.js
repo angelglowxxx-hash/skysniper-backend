@@ -1,4 +1,4 @@
-// SkySniper — server.js v1.8
+// SkySniper — server.js v1.9
 // 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
 
 import express from 'express';
@@ -27,8 +27,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// 🔒 Hardcoded port for local/dev
-const PORT = 8080;
+// ✅ Use dynamic port for Render, fallback for local
+const PORT = process.env.PORT || 8080;
 
 // 🔗 Auto-load all routes from /routes
 const routesPath = path.join(__dirname, 'routes');
@@ -49,9 +49,14 @@ app.get("/login", (req, res) => {
 // ✅ Public admin panel preview route
 app.get("/admin", (req, res) => {
   res.render("admin", {
+    ai_model: process.env.GEMINI_MODEL_NAME || "Gemini Flash",
+    supabase_url: process.env.SUPABASE_URL || "Not set",
+    backend_url: process.env.BACKEND_URL || "Not set",
+    fingerprints: [], // can be populated from Supabase later
+    rounds: [],       // can be populated from Supabase later
     diagnostics: {
       status: "🟢 Online",
-      version: "v1.8",
+      version: "v1.9",
       timestamp: new Date().toISOString(),
       message: "Welcome Honey Baby 💥 — SkySniper is locked and loaded."
     }
