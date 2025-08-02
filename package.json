@@ -1,7 +1,7 @@
 {
   "name": "skysniper-backend",
-  "version": "1.0.0",
-  "description": "SkySniper backend API for hash decoding, AI prediction, and Supabase sync",
+  "version": "1.1.0",
+  "description": "SkySniper backend API for hash decoding, AI prediction, fingerprint memory, and Supabase sync",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -15,9 +15,14 @@
     "ai-prediction",
     "supabase",
     "gemini",
-    "skysniper"
+    "skysniper",
+    "fingerprint",
+    "self-evolving",
+    "browser-toolkit",
+    "hud",
+    "automation"
   ],
-  "author": "Honey Baby",
+  "author": "Honey Baby 💥",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
