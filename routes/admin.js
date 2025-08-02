@@ -53,4 +53,15 @@ router.post("/pushConfig", async (req, res) => {
   }
 });
 
+// 🧪 Diagnostics JSON endpoint
+router.get("/diagnostics", async (req, res) => {
+  try {
+    const diagnostics = await getDiagnostics();
+    res.json(diagnostics);
+  } catch (err) {
+    console.error("❌ Diagnostics error:", err.message);
+    res.status(500).json({ error: "Diagnostics failed", details: err.message });
+  }
+});
+
 export default router;
