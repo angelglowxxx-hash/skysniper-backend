@@ -1,4 +1,4 @@
-// SkySniper — server.js v1.6
+// SkySniper — server.js v1.7
 // 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
 
 import express from 'express';
@@ -43,6 +43,18 @@ fs.readdirSync(routesPath).forEach(async file => {
 // ✅ Add login page route
 app.get("/login", (req, res) => {
   res.render("login");
+});
+
+// ✅ Public admin panel preview route
+app.get("/admin", (req, res) => {
+  res.render("admin", {
+    diagnostics: {
+      status: "🟢 Online",
+      version: "v1.7",
+      timestamp: new Date().toISOString(),
+      message: "Welcome Honey Baby 💥 — SkySniper is locked and loaded."
+    }
+  });
 });
 
 // 🌐 Redirect homepage to admin panel
