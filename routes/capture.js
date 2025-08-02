@@ -1,5 +1,5 @@
 // SkySniper — routes/capture.js
-// 📡 Receives DOM + network data, triggers AI, logs to Supabase
+// 📡 Receives DOM + network data, triggers AI, logs to Supabase, returns HUD payload
 
 import express from 'express';
 import fetch from 'node-fetch';
@@ -11,6 +11,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 router.post("/", async (req, res) => {
   const {
+    site_url,
     game,
     roundId,
     hash,
@@ -30,6 +31,7 @@ router.post("/", async (req, res) => {
     // 🔮 Build AI prompt
     const prompt = `
 Crash Game Round:
+- Site: ${site_url}
 - Game: ${game}
 - Round ID: ${roundId}
 - Hash: ${hash}
@@ -71,6 +73,7 @@ Return:
         Prefer: "return=representation"
       },
       body: JSON.stringify({
+        site_url,
         game,
         round_id: roundId,
         hash,
@@ -89,8 +92,9 @@ Return:
 
     const dbResult = await supabaseRes.json();
 
-    // ✅ Return full result
+    // ✅ Return HUD-ready payload
     res.json({
+      site_url,
       game,
       roundId,
       hash,
@@ -100,7 +104,6 @@ Return:
       next_prediction,
       tag,
       pattern,
-      dbResult,
       timestamp: new Date().toISOString()
     });
 
