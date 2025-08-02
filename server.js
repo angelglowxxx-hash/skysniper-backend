@@ -1,4 +1,4 @@
-// SkySniper — server.js v1.5
+// SkySniper — server.js v1.6
 // 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
 
 import express from 'express';
@@ -38,6 +38,11 @@ fs.readdirSync(routesPath).forEach(async file => {
     app.use(routeName, routeModule.default);
     console.log(`🔗 Mounted route: ${routeName}`);
   }
+});
+
+// ✅ Add login page route
+app.get("/login", (req, res) => {
+  res.render("login");
 });
 
 // 🌐 Redirect homepage to admin panel
