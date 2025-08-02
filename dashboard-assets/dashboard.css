@@ -1,0 +1,16 @@
+body {
+  font-family: monospace, monospace;
+  background: #181c26;
+  color: #fff;
+  padding: 2em;
+}
+h1, h2 { color: #30e060; }
+#logs {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+#status {
+  margin-bottom: 1em;
+  color: #ffe060;
+}
