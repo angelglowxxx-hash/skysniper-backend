@@ -1,16 +1,107 @@
-body {
-  font-family: monospace, monospace;
-  background: #181c26;
+:root {
+  --primary: #1a1a1a;
+  --accent: #e62429;
+  --background: #101014;
+  --text: #fff;
+  --panel: #202026;
+  --border: #333;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  background: var(--primary);
+  color: var(--accent);
+  padding: 1.2em 2em 1em 2em;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  box-shadow: 0 2px 16px #000a;
+  border-bottom: 2px solid var(--accent);
+}
+.logo {
+  font-size: 2.1em;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+.tagline {
+  font-size: 1.2em;
   color: #fff;
+  opacity: 0.7;
+  font-style: italic;
+}
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2em;
   padding: 2em;
 }
-h1, h2 { color: #30e060; }
-#logs {
-  max-height: 300px;
-  overflow-y: auto;
-  border-radius: 8px;
-}
-#status {
+section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.5em;
   margin-bottom: 1em;
-  color: #ffe060;
+  box-shadow: 0 2px 12px #0003;
+}
+h2 {
+  color: var(--accent);
+  margin-top: 0;
+}
+pre {
+  background: #18181f;
+  color: #fff;
+  border-radius: 8px;
+  padding: 1em;
+  font-size: 1em;
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 0;
+}
+label {
+  display: block;
+  margin-bottom: .6em;
+  color: #fff;
+}
+input[type="text"], select, textarea {
+  width: 90%;
+  padding: 0.5em;
+  margin-top: .2em;
+  background: #23232c;
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font-size: 1em;
+}
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.6em 1.2em;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #c91d20;
+}
+footer {
+  text-align: center;
+  padding: 1.2em;
+  background: var(--primary);
+  color: #fff;
+  border-top: 2px solid var(--accent);
+  font-size: 1em;
+  margin-top: 2em;
+}
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
 }
