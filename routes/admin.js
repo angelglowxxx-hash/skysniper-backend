@@ -8,14 +8,8 @@ import { getDiagnostics } from '../utils/diagnostics.js';
 
 const router = express.Router();
 
-// 🔐 Basic token-based access
-router.use((req, res, next) => {
-  const token = req.headers['x-admin-token'];
-  if (token !== process.env.ADMIN_TOKEN) {
-    return res.status(403).send("Forbidden: Invalid admin token");
-  }
-  next();
-});
+// 🔓 Public access — token check disabled
+router.use((req, res, next) => next());
 
 // 🧩 Admin dashboard view
 router.get("/", async (req, res) => {
