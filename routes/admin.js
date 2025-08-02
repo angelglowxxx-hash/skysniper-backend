@@ -14,14 +14,14 @@ router.use((req, res, next) => next());
 // 🧩 Admin dashboard view
 router.get("/", async (req, res) => {
   try {
-    const fingerprints = await getFingerprints(); // Supabase: site_fingerprints
-    const rounds = await getLatestRounds();       // Supabase: predictions
-    const diagnostics = await getDiagnostics();   // Memory, uptime, routes
+    const fingerprints = await getFingerprints() || [];
+    const rounds = await getLatestRounds() || [];
+    const diagnostics = await getDiagnostics();
 
     res.render("admin", {
-      ai_model: "Gemini 2.5 Flash",
-      backend_url: process.env.BACKEND_URL,
-      supabase_url: process.env.SUPABASE_URL,
+      ai_model: process.env.GEMINI_MODEL_NAME || "Gemini Flash",
+      backend_url: process.env.BACKEND_URL || "Not set",
+      supabase_url: process.env.SUPABASE_URL || "Not set",
       fingerprints,
       rounds,
       diagnostics
@@ -35,11 +35,13 @@ router.get("/", async (req, res) => {
 // 🔮 Push AI-generated config for a site/game
 router.post("/pushConfig", async (req, res) => {
   const { site_url, game } = req.body;
-  if (!site_url || !game) return res.status(400).json({ error: "Missing site_url or game" });
+  if (!site_url || !game) {
+    return res.status(400).json({ error: "Missing site_url or game" });
+  }
 
   try {
-    const config = await suggestModules({ site_url, game }); // Gemini-powered
-    await updateConfig(site_url, config);                    // Supabase override
+    const config = await suggestModules({ site_url, game });
+    await updateConfig(site_url, config);
     res.json({ status: "pushed", config });
   } catch (err) {
     console.error("❌ Config push error:", err.message);
