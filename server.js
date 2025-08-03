@@ -1,99 +1,38 @@
-// SkySniper — server.js v1.9.2
-// 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
-
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { supabase } from './supabase/client.js';
-import { getFingerprints, getLatestRounds } from './utils/dbClient.js';
-import { getDiagnostics } from './utils/diagnostics.js';
-
-// 🔧 Load environment variables
-dotenv.config();
-
-// 📍 Resolve __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// 🚀 Initialize Express app
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// 🖼️ Serve static assets
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 🧩 Set up EJS view engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-// 🌐 Use dynamic port for Render
-const PORT = process.env.PORT || 8080;
-
-// 🔗 Auto-load all routes from /routes
-const routesPath = path.join(__dirname, 'routes');
-fs.readdirSync(routesPath).forEach(async file => {
-  if (file.endsWith('.js')) {
-    const routeModule = await import(`./routes/${file}`);
-    const routeName = '/' + file.replace('.js', '');
-    app.use(routeName, routeModule.default);
-    console.log(`🔗 Mounted route: ${routeName}`);
-  }
+// ✅ /capture (POST)
+app.post("/capture", async (req, res) => {
+  const { site_url, dom_signature, network_patterns } = req.body;
+  console.log("📡 Fingerprint received:", site_url);
+  res.json({ status: "ok", received: true });
 });
 
-// 🔐 Optional login route
-app.get("/login", (req, res) => {
-  res.render("login");
-});
-
-// 🧠 Admin panel route with live data
-app.get("/admin", async (req, res) => {
-  try {
-    const fingerprints = await getFingerprints();
-    const rounds = await getLatestRounds();
-    const diagnostics = await getDiagnostics();
-
-    res.render("admin", {
-      ai_model: process.env.GEMINI_MODEL_NAME || "Gemini Flash",
-      supabase_url: process.env.SUPABASE_URL || "Not set",
-      backend_url: process.env.BACKEND_URL || "Not set",
-      fingerprints,
-      rounds,
-      diagnostics
-    });
-  } catch (err) {
-    console.error("❌ Admin panel error:", err.message);
-    res.status(500).send("Admin panel failed to load");
-  }
-});
-
-// ✅ Ping route for health check
-app.get("/ping", (req, res) => {
+// ✅ /predict (POST)
+app.post("/predict", async (req, res) => {
+  const { round_id, hash, latestMultiplier, pattern } = req.body;
+  console.log("🔮 Predict request:", round_id);
   res.json({
-    status: "🟢 Online",
-    version: "v1.9.2",
-    timestamp: new Date().toISOString(),
-    message: "SkySniper backend is alive and sniping 💥"
+    next_prediction: "2.15",
+    tag: "safe",
+    pattern: [1.8, 2.0, 2.15]
   });
 });
 
-// 🏠 Redirect homepage to admin
-app.get("/", (req, res) => {
-  res.redirect("/admin");
+// ✅ /uiState (GET)
+app.get("/uiState", async (req, res) => {
+  const { round_id, site_url } = req.query;
+  console.log("🧠 UI state for:", round_id);
+  res.json({
+    state: "ready",
+    commentary: "AI confident in next round"
+  });
 });
 
-// 🛡️ Global error handling
-process.on("uncaughtException", err => {
-  console.error("🔥 Uncaught Exception:", err);
-});
-process.on("unhandledRejection", err => {
-  console.error("🔥 Unhandled Rejection:", err);
-});
-
-// 🚀 Start server
-app.listen(PORT, () => {
-  console.log(`🚀 SkySniper backend running at http://localhost:${PORT}`);
+// ✅ /gameConfig (GET)
+app.get("/gameConfig", async (req, res) => {
+  const { site_url } = req.query;
+  console.log("🧩 Config for:", site_url);
+  res.json({
+    layout: "default",
+    theme: "dark",
+    modules: ["prediction", "hashVerifier", "trendGraph"]
+  });
 });
