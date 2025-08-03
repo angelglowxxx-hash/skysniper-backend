@@ -1,7 +1,7 @@
 {
   "name": "skysniper-backend",
-  "version": "1.9.0",
-  "description": "SkySniper backend API for hash decoding, AI prediction, fingerprint memory, Supabase sync, HUD rendering, site classification, and admin control",
+  "version": "1.9.3",
+  "description": "SkySniper backend API for hash decoding, AI prediction (Gemini 2.5 Flash), fingerprint memory, Supabase sync, HUD rendering, site classification, and admin control",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -28,7 +28,11 @@
     "site-classifier",
     "tampermonkey",
     "stealth-mode",
-    "trend-analysis"
+    "trend-analysis",
+    "gemini-flash",
+    "live-dashboard",
+    "modular-api",
+    "render-deploy"
   ],
   "author": "Honey Baby 💥",
   "license": "MIT",
