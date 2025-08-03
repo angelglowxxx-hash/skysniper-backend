@@ -1,0 +1,9 @@
+<section class="hud-module">
+  <h3>🎯 Prediction</h3>
+  <p><strong>Round:</strong> <%= round_id %></p>
+  <p><strong>Predicted Multiplier:</strong> <%= next_prediction %>x</p>
+  <p><strong>Confidence:</strong> <%= confidence %></p>
+  <% if (commentary) { %>
+    <p><em>🧠 AI Insight:</em> <%= commentary %></p>
+  <% } %>
+</section>
