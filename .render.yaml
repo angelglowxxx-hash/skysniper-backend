@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: skysniper-backend
+    runtime: node
+    repo: https://github.com/your-username/skysniper-backend
+    branch: main
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: GEMINI_API_KEY
+        value: AIzaSyC6ZjLR3mtq4odTY9q2AhqNG2v7uzvh9r0
+      - key: GEMINI_MODEL_NAME
+        value: gemini-1.5-flash
+      - key: GEMINI_MODEL_URL
+        value: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+      - key: SUPABASE_URL
+        value: https://eipwtuojyimfisucaxnv.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpcHd0dW9qeWltZmlzdWNheG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTgwNDAsImV4cCI6MjA2OTYzNDA0MH0.xEWYZ7MKpOsTfGUpSZqItqZaylJWqFF1NWk-g8XLkpg
+      - key: SUPABASE_SERVICE_ROLE
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpcHd0dW9qeWltZmlzdWNheG52Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDA1ODA0MCwiZXhwIjoyMDY5NjM0MDQwfQ.t-N84NZMbhfYuRkDgLyg1snaIZJexhv0P5qFtxYRE
+      - key: BACKEND_URL
+        value: https://skysniper-backend.onrender.com
+      - key: PORT
+        value: 8080
+      - key: ADMIN_TOKEN
+        value: 9907113529
+    autoDeploy: true
+    healthCheckPath: /ping
+    plan: free
