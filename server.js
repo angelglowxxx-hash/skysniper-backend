@@ -1,4 +1,4 @@
-// SkySniper — server.js v1.9.1
+// SkySniper — server.js v1.9.2
 // 🧠 Modular backend API with admin panel, AI prediction, fingerprint memory, Supabase sync
 
 import express from 'express';
@@ -68,6 +68,16 @@ app.get("/admin", async (req, res) => {
     console.error("❌ Admin panel error:", err.message);
     res.status(500).send("Admin panel failed to load");
   }
+});
+
+// ✅ Ping route for health check
+app.get("/ping", (req, res) => {
+  res.json({
+    status: "🟢 Online",
+    version: "v1.9.2",
+    timestamp: new Date().toISOString(),
+    message: "SkySniper backend is alive and sniping 💥"
+  });
 });
 
 // 🏠 Redirect homepage to admin
