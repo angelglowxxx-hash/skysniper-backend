@@ -1,4 +1,4 @@
-# .gitignore
+# .gitignore (Final, Corrected Version)
 
 # ----------------------------------------------------------------
 # GENERAL
@@ -65,3 +65,15 @@ coverage
 # ----------------------------------------------------------------
 # Prisma Studio backup file
 prisma/studio-backup.sqlite
+
+
+# ================================================================
+# CRITICAL DEPLOYMENT FILES
+# ================================================================
+# Package lock files are essential for repeatable, secure deployments.
+# The '!' prefix ensures they are NEVER ignored, even if a parent
+# directory or a wildcard rule tries to exclude them.
+# THIS IS THE FIX FOR THE DEPLOYMENT ERROR.
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock
