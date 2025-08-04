@@ -1,14 +1,8 @@
-// src/common/queues/queues.service.ts
-// -----------------------------------------------------------------------------
-// This service provides a simple interface for adding jobs to our queues.
-// It abstracts away the BullMQ-specific syntax.
-// -----------------------------------------------------------------------------
-
+// src/common/queues/queues.service.ts (Corrected)
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Queue, Job } from 'bullmq';
 
-// Define the structure of the data for our AI jobs.
 export interface AiJobData {
   jobType: 'discovery' | 'prediction' | 'config';
   payload: any;
@@ -16,16 +10,11 @@ export interface AiJobData {
 
 @Injectable()
 export class QueuesService {
-  constructor(
-    @InjectQueue('ai-jobs') private readonly aiJobsQueue: Queue,
-  ) {}
+  constructor(@InjectQueue('ai-jobs') private readonly aiJobsQueue: Queue) {}
 
-  /**
-   * Adds a new job to the AI processing queue.
-   * @param data The data for the AI job, specifying the type and payload.
-   */
-  async addAiJob(data: AiJobData): Promise<void> {
-    await this.aiJobsQueue.add(data.jobType, data);
+  async addAiJob(data: AiJobData): Promise<Job> { // FIX: Return type is Job
+    const job = await this.aiJobsQueue.add(data.jobType, data);
     console.log(`⚪️ Queues Service: Added '${data.jobType}' job to the queue.`);
+    return job; // FIX: Return the job object
   }
 }
