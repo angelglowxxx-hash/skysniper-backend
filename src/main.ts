@@ -2,6 +2,7 @@
 // -----------------------------------------------------------------------------
 // This is the main entry point for the SkySniper X application.
 // It initializes the NestJS app, configures global middleware, and starts the server.
+// It also integrates graceful shutdown hooks for database connections.
 // -----------------------------------------------------------------------------
 
 import { NestFactory } from '@nestjs/core';
@@ -9,6 +10,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
+import { PrismaService } from './common/database/prisma.service'; // 👈 IMPORT PRISMA SERVICE
 
 async function bootstrap() {
   // Create the NestJS application instance, using our root AppModule.
@@ -47,6 +49,12 @@ async function bootstrap() {
       },
     }),
   );
+
+  // --- ENABLE GRACEFUL SHUTDOWN HOOKS ---
+  // This is a critical step for production-readiness. It ensures that when the
+  // application receives a shutdown signal, it will cleanly disconnect from the database.
+  const prismaService = app.get(PrismaService);
+  await prismaService.enableShutdownHooks(app); // 👈 ACTIVATE THE HOOK
 
   // --- START THE SERVER ---
 
