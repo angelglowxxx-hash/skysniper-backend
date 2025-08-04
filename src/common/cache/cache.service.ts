@@ -17,19 +17,22 @@ import Redis from 'ioredis';
 export class CacheService implements OnModuleInit, OnModuleDestroy {
   private readonly redisClient: Redis;
 
-  constructor(private readonly configService: ConfigService) {
-    // Initialize the Redis client with connection details from environment variables.
-    this.redisClient = new Redis({
-      host: this.configService.get<string>('REDIS_HOST'),
-      port: this.configService.get<number>('REDIS_PORT'),
-      password: this.configService.get<string>('REDIS_PASSWORD'),
-      // Add a retry strategy for robustness in production.
-      maxRetriesPerRequest: 3,
-    });
+ // src/common/cache/cache.service.ts (UPDATED CONSTRUCTOR)
 
-    console.log('⚪️ Cache Service: Redis client initialized.');
+constructor(private readonly configService: ConfigService) {
+  // Get the full Redis URL from environment variables.
+  const redisUrl = this.configService.get<string>('REDIS_URL');
+  if (!redisUrl) {
+    throw new Error('FATAL_ERROR: REDIS_URL is not defined in environment variables.');
   }
 
+  // Initialize the Redis client with the single URL.
+  this.redisClient = new Redis(redisUrl, {
+    maxRetriesPerRequest: 3,
+  });
+
+  console.log('⚪️ Cache Service: Redis client initialized.');
+}
   // On initialization, ping the Redis server to confirm a successful connection.
   async onModuleInit() {
     try {
