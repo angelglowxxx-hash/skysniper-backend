@@ -1,6 +1,57 @@
-// prisma/schema.prisma (DEFINITIVE, FINAL VERSION FOR RENDER DB)
+// prisma/schema.prisma (DEFINITIVE, FINAL VERSION)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL") // Used for migrations on Render
+}
+
+model SiteFingerprint {
+  id               String       @id @default(cuid())
+  siteUrl          String       @unique
+  gameType         String?
+  selectors        Json?
+  isStable         Boolean      @default(true)
+  missCount        Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  gameConfigs      GameConfig[]
+}
+
+model PredictionLog {
+  id             String   @id @default(cuid())
+  roundId        String?
+  hash           String?
+  siteUrl        String
+  predictedAt    DateTime @default(now())
+  predictionData Json
+}
+
+model GameConfig {
+  id            String          @id @default(cuid())
+  game          String
+  config        Json
+  createdAt     DateTime        @default(now())
+  fingerprintId String
+  fingerprint   SiteFingerprint @relation(fields: [fingerprintId], references: [id], onDelete: Cascade)
+}
+
+model SystemAlert {
+  id        String    @id @default(cuid())
+  type      AlertType
+  message   String
+  metadata  Json?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+enum AlertType {
+  AI_ERROR
+  SELECTOR_MISS
+  DATABASE_ERROR
+  QUEUE_ERROR
 }
