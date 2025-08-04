@@ -1,0 +1,67 @@
+# .gitignore
+
+# ----------------------------------------------------------------
+# GENERAL
+# ----------------------------------------------------------------
+# Environment variables - THIS IS CRITICAL FOR SECURITY
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependency directories
+node_modules/
+dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# ----------------------------------------------------------------
+# IDE & EDITOR CONFIGS
+# ----------------------------------------------------------------
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+# ----------------------------------------------------------------
+# NESTJS & TYPESCRIPT
+# ----------------------------------------------------------------
+# Compiled output
+dist
+# Cache files
+.nest/
+# Test coverage
+coverage
+
+
+# ----------------------------------------------------------------
+# PRISMA
+# ----------------------------------------------------------------
+# Prisma Studio backup file
+prisma/studio-backup.sqlite
