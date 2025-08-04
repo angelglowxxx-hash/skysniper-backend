@@ -1,22 +1,13 @@
 # render.yaml
 # -----------------------------------------------------------------------------
-# FINAL, DEFINITIVE BLUEPRINT - Version 5
-# This version correctly separates Databases from Services, which is the
-# proper way to define infrastructure in a Render blueprint.
+# FINAL BLUEPRINT - Version 6
+# This version is configured to use an EXTERNAL Supabase database and
+# correctly handles all environment variables as secrets.
 # -----------------------------------------------------------------------------
 
-# We declare our managed databases in their own top-level block.
-databases:
-  - name: skysniper-db
-    plan: free # Change to 'starter' or higher for production use
-    # We specify the initial database name and user to be created.
-    databaseName: skysniperdb
-    user: skysniper_user
-
-# We declare our running services (web apps, workers, redis) in this block.
 services:
   # -----------------------------------------------------------------
-  # Service 1: The Redis Cache & Job Queue
+  # Service 1: The Redis Cache & Job Queue (Managed by Render)
   # -----------------------------------------------------------------
   - type: redis
     name: skysniper-cache
@@ -24,35 +15,36 @@ services:
     ipAllowList: [] # Allows connections from other services in our account.
 
   # -----------------------------------------------------------------
-  # Service 2: The SkySniper X NestJS Application
+  # Service 2: The SkySniper X NestJS Application (Hosted by Render)
   # -----------------------------------------------------------------
   - type: web
     name: skysniper-app
     plan: free
-    # We explicitly tell Render this is a Docker-based service.
     runtime: docker
     dockerfilePath: ./Dockerfile
 
     healthCheckPath: /
 
     envVars:
-      # --- Automatic Variables (linked from other resources) ---
-      - key: DATABASE_URL
-        # We use 'fromDatabase' to link to our managed database.
-        fromDatabase:
-          name: skysniper-db
-          property: connectionString
+      # --- Automatic Variable from Render Redis ---
       - key: REDIS_URL
-        # We use 'fromService' to link to our Redis service.
         fromService:
           type: redis
           name: skysniper-cache
           property: connectionString
 
+      # --- Configuration Variable ---
+      - key: GEMINI_MODEL_URL
+        value: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
       # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
-      - key: GEMINI_API_KEY
+      # 'sync: false' is critical. It tells Render you will provide these securely.
+      - key: "postgres://postgres:@#Roni123@db.eipwtuojyimfisucaxnv.supabase.co:5432/postgres"
+
         sync: false
-      - key: ADMIN_TOKEN
+      - key: AIzaSyC6ZjLR3mtq4odTY9q2AhqNG2v7uzvh9r0
+        sync: false
+      - key: 9907113529
         sync: false
 
       # --- Standard Variables ---
