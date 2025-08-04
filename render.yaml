@@ -1,0 +1,69 @@
+# render.yaml
+# Blueprint for deploying the SkySniper X Backend on Render.
+# This file tells Render how to set up our application, database, and cache.
+
+services:
+  # -----------------------------------------------------------------
+  # 1. The PostgreSQL Database Service
+  # -----------------------------------------------------------------
+  - type: pserv
+    name: skysniper-db
+    plan: free # Or your desired plan (e.g., 'starter')
+    postgres:
+      version: 15
+    # The following line automatically creates a database named 'skysniperdb'
+    # and sets the POSTGRES_DB environment variable in our 'app' service.
+    databaseName: skysniperdb
+    ipAllowList: [] # Allows connections from anywhere (change if you need more security)
+
+  # -----------------------------------------------------------------
+  # 2. The Redis Cache & Job Queue Service
+  # -----------------------------------------------------------------
+  - type: redis
+    name: skysniper-cache
+    plan: free # Or your desired plan
+    ipAllowList: []
+
+  # -----------------------------------------------------------------
+  # 3. The SkySniper NestJS Application Service
+  # -----------------------------------------------------------------
+  - type: web
+    name: skysniper-app
+    plan: free # Or your desired plan
+    # Build and run using the Dockerfile
+    dockerfilePath: ./Dockerfile
+    # Set up health checks to ensure the service is running correctly.
+    healthCheckPath: /
+    # Link environment variables from the other services.
+    envVars:
+      # Automatically get the DATABASE_URL and REDIS_URL from the services we created above.
+      # Render formats these automatically for us.
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: skysniper-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: skysniper-cache
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: skysniper-cache
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: skysniper-cache
+          property: password
+      # --- IMPORTANT ---
+      # You MUST add your other secrets in the Render Dashboard under 'Environment'.
+      # DO NOT put them here in plain text.
+      - key: GEMINI_API_KEY
+        sync: false # Tells Render you will set this manually in the dashboard.
+      - key: ADMIN_TOKEN
+        sync: false # Tells Render you will set this manually in the dashboard.
+      - key: PORT
+        value: 8080 # The port our Dockerfile exposes
