@@ -1,43 +1,52 @@
 # render.yaml
-# Blueprint for deploying the SkySniper X Backend on Render.
-# This file tells Render how to set up our application, database, and cache.
+# -----------------------------------------------------------------------------
+# This is the MASTER BLUEPRINT for deploying the SkySniper X backend on Render.
+# It defines all necessary cloud services and links them together automatically.
+# -----------------------------------------------------------------------------
 
 services:
   # -----------------------------------------------------------------
-  # 1. The PostgreSQL Database Service
+  # Service 1: The PostgreSQL Database (from Supabase or Render)
   # -----------------------------------------------------------------
+  # OPTION A: If you want Render to manage your database (Recommended for simplicity)
   - type: pserv
     name: skysniper-db
-    plan: free # Or your desired plan (e.g., 'starter')
+    plan: free # Change to 'starter' or higher for production use
     postgres:
       version: 15
-    # The following line automatically creates a database named 'skysniperdb'
-    # and sets the POSTGRES_DB environment variable in our 'app' service.
+    # This automatically creates a database named 'skysniperdb'
     databaseName: skysniperdb
-    ipAllowList: [] # Allows connections from anywhere (change if you need more security)
+    ipAllowList: [] # Allows connections from other Render services
+
+  # OPTION B: If you are using an EXTERNAL Supabase database, you would DELETE
+  # the 'skysniper-db' service above and set the DATABASE_URL manually
+  # in the skysniper-app environment variables in the Render dashboard.
 
   # -----------------------------------------------------------------
-  # 2. The Redis Cache & Job Queue Service
+  # Service 2: The Redis Cache & Job Queue
   # -----------------------------------------------------------------
   - type: redis
     name: skysniper-cache
-    plan: free # Or your desired plan
-    ipAllowList: []
+    plan: free # Change to a paid plan for production use
+    ipAllowList: [] # Allows connections from other Render services
 
   # -----------------------------------------------------------------
-  # 3. The SkySniper NestJS Application Service
+  # Service 3: The SkySniper X NestJS Application
   # -----------------------------------------------------------------
   - type: web
     name: skysniper-app
-    plan: free # Or your desired plan
-    # Build and run using the Dockerfile
+    plan: free # Change to 'starter' or higher for production use
+    # Tell Render to build and run our application using its Dockerfile.
     dockerfilePath: ./Dockerfile
-    # Set up health checks to ensure the service is running correctly.
+    # Render will automatically run the command from our entrypoint.sh script.
+
+    # A health check path ensures your service is alive and ready.
+    # Our NestJS app will have a root route by default.
     healthCheckPath: /
-    # Link environment variables from the other services.
+    
+    # Environment variables are the key to connecting all services.
     envVars:
-      # Automatically get the DATABASE_URL and REDIS_URL from the services we created above.
-      # Render formats these automatically for us.
+      # --- Automatic Variables (linked from other Render services) ---
       - key: DATABASE_URL
         fromService:
           type: pserv
@@ -58,12 +67,16 @@ services:
           type: redis
           name: skysniper-cache
           property: password
-      # --- IMPORTANT ---
-      # You MUST add your other secrets in the Render Dashboard under 'Environment'.
-      # DO NOT put them here in plain text.
+
+      # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
+      # 'sync: false' tells Render not to store the value in this YAML file.
       - key: GEMINI_API_KEY
-        sync: false # Tells Render you will set this manually in the dashboard.
+        sync: false
       - key: ADMIN_TOKEN
-        sync: false # Tells Render you will set this manually in the dashboard.
+        sync: false
+
+      # --- Standard Variables ---
       - key: PORT
-        value: 8080 # The port our Dockerfile exposes
+        value: 8080 # This must match the port EXPOSEd in our Dockerfile.
+      - key: NODE_ENV
+        value: production
