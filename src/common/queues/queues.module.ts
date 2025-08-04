@@ -13,16 +13,15 @@ import { AiProcessor } from './processors/ai.processor';
 @Module({
   imports: [
     BullModule.forRootAsync({
-      // Use a factory to dynamically configure the Redis connection from env variables.
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-          password: configService.get<string>('REDIS_PASSWORD'),
-        },
-      }),
-    }),
+  inject: [ConfigService],
+  useFactory: (configService: ConfigService) => {
+    // BullMQ can also connect using the full URL string.
+    const redisUrl = configService.get<string>('REDIS_URL');
+    return {
+      connection: redisUrl,
+    };
+  },
+}),
     // Register the specific queue we will be using. We can add more queues here if needed.
     BullModule.registerQueue({
       name: 'ai-jobs', // The name of our queue for all AI-related tasks.
