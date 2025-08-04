@@ -1,47 +1,67 @@
-// src/common/queues/queues.module.ts
-// -----------------------------------------------------------------------------
-// This module sets up the BullMQ job queue system, powered by Redis.
-// It registers the queue and connects the processor that will handle the jobs.
-// -----------------------------------------------------------------------------
+# render.yaml
+# -----------------------------------------------------------------------------
+# FINAL CORRECTED BLUEPRINT - Version 4
+# This version uses the correct `pserv` type for the database and explicitly
+# sets the `runtime` for the web service to `docker`.
+# -----------------------------------------------------------------------------
 
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
-import { QueuesService } from './queues.service';
-import { AiProcessor } from './processors/ai.processor';
+services:
+  # -----------------------------------------------------------------
+  # Service 1: The PostgreSQL Database
+  # Using the 'pserv' (Private Service) type as required by Render for databases.
+  # -----------------------------------------------------------------
+  - type: pserv
+    name: skysniper-db
+    plan: free # Change to 'starter' or higher for production use
+    # The 'postgres' block specifies the database details. NO 'runtime' key here.
+    postgres:
+      version: 15
+      databaseName: skysniperdb
+      user: skysniper_user
 
-@Module({
-  imports: [
-    BullModule.forRootAsync({
-  inject: [ConfigService],
-  useFactory: (configService: ConfigService) => {
-    // BullMQ can also connect using the full URL string.
-    const redisUrl = configService.get<string>('REDIS_URL');
-    return {
-      connection: redisUrl,
-    };
-  },
-}),
-    // Register the specific queue we will be using. We can add more queues here if needed.
-    BullModule.registerQueue({
-      name: 'ai-jobs', // The name of our queue for all AI-related tasks.
-      defaultJobOptions: {
-        attempts: 3, // Retry a failed job up to 3 times.
-        backoff: {
-          type: 'exponential', // Use exponential backoff for retries (e.g., 1s, 2s, 4s).
-          delay: 1000,
-        },
-        removeOnComplete: true, // Automatically remove jobs when they complete successfully.
-        removeOnFail: 1000, // Keep failed jobs for 1000 seconds for inspection.
-      },
-    }),
-  ],
-  providers: [
-    QueuesService, // The service to add jobs to the queue.
-    AiProcessor, // The processor that will handle the jobs.
-  ],
-  exports: [
-    QueuesService, // Export the service so other modules can add jobs.
-  ],
-})
-export class QueuesModule {}
+  # -----------------------------------------------------------------
+  # Service 2: The Redis Cache & Job Queue
+  # (This definition is correct)
+  # -----------------------------------------------------------------
+  - type: redis
+    name: skysniper-cache
+    plan: free
+    ipAllowList: []
+
+  # -----------------------------------------------------------------
+  # Service 3: The SkySniper X NestJS Application
+  # -----------------------------------------------------------------
+  - type: web
+    name: skysniper-app
+    plan: free
+    # CRITICAL FIX: Explicitly set the runtime to 'docker'.
+    runtime: docker
+    # This now becomes valid because the runtime is 'docker'.
+    dockerfilePath: ./Dockerfile
+
+    healthCheckPath: /
+
+    envVars:
+      # --- Automatic Variables (linked from other Render services) ---
+      - key: DATABASE_URL
+        fromService:
+          type: pserv # Match the service type above
+          name: skysniper-db
+          property: connectionString # This is valid for a postgres pserv
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: skysniper-cache
+          property: connectionString # Use the full URL for Redis
+
+      # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+
+      # --- Standard Variables ---
+      - key: PORT
+        value: 8080
+      - key: NODE_ENV
+        value: production
