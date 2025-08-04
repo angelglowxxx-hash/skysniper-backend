@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    /* --- Essential for NestJS --- */
+    "module": "commonjs",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    /* --- Elite Type-Checking for High Code Quality --- */
+    // 'strict: true' enables a whole suite of type-checking options.
+    // This is the single most effective way to prevent common bugs.
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* --- Build & Module Resolution --- */
+    "target": "ES2021",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true, // Speeds up subsequent builds
+    "skipLibCheck": true, // Skips type checking of declaration files in node_modules
+
+    /* --- Interoperability --- */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "exclude": ["node_modules", "dist"]
+}
