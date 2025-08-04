@@ -1,58 +1,53 @@
 # render.yaml
 # -----------------------------------------------------------------------------
-# FINAL CORRECTED BLUEPRINT - Version 4
-# This version uses the correct `pserv` type for the database and explicitly
-# sets the `runtime` for the web service to `docker`.
+# FINAL, DEFINITIVE BLUEPRINT - Version 5
+# This version correctly separates Databases from Services, which is the
+# proper way to define infrastructure in a Render blueprint.
 # -----------------------------------------------------------------------------
 
+# We declare our managed databases in their own top-level block.
+databases:
+  - name: skysniper-db
+    plan: free # Change to 'starter' or higher for production use
+    # We specify the initial database name and user to be created.
+    databaseName: skysniperdb
+    user: skysniper_user
+
+# We declare our running services (web apps, workers, redis) in this block.
 services:
   # -----------------------------------------------------------------
-  # Service 1: The PostgreSQL Database
-  # Using the 'pserv' (Private Service) type as required by Render for databases.
-  # -----------------------------------------------------------------
-  - type: pserv
-    name: skysniper-db
-    plan: free # Change to 'starter' or higher for production use
-    # The 'postgres' block specifies the database details. NO 'runtime' key here.
-    postgres:
-      version: 15
-      databaseName: skysniperdb
-      user: skysniper_user
-
-  # -----------------------------------------------------------------
-  # Service 2: The Redis Cache & Job Queue
-  # (This definition is correct)
+  # Service 1: The Redis Cache & Job Queue
   # -----------------------------------------------------------------
   - type: redis
     name: skysniper-cache
     plan: free
-    ipAllowList: []
+    ipAllowList: [] # Allows connections from other services in our account.
 
   # -----------------------------------------------------------------
-  # Service 3: The SkySniper X NestJS Application
+  # Service 2: The SkySniper X NestJS Application
   # -----------------------------------------------------------------
   - type: web
     name: skysniper-app
     plan: free
-    # CRITICAL FIX: Explicitly set the runtime to 'docker'.
+    # We explicitly tell Render this is a Docker-based service.
     runtime: docker
-    # This now becomes valid because the runtime is 'docker'.
     dockerfilePath: ./Dockerfile
 
     healthCheckPath: /
 
     envVars:
-      # --- Automatic Variables (linked from other Render services) ---
+      # --- Automatic Variables (linked from other resources) ---
       - key: DATABASE_URL
-        fromService:
-          type: pserv # Match the service type above
+        # We use 'fromDatabase' to link to our managed database.
+        fromDatabase:
           name: skysniper-db
-          property: connectionString # This is valid for a postgres pserv
+          property: connectionString
       - key: REDIS_URL
+        # We use 'fromService' to link to our Redis service.
         fromService:
           type: redis
           name: skysniper-cache
-          property: connectionString # Use the full URL for Redis
+          property: connectionString
 
       # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
       - key: GEMINI_API_KEY
