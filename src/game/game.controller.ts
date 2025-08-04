@@ -18,10 +18,12 @@ export class GameController {
   @Post('predict')
   @HttpCode(HttpStatus.ACCEPTED)
   async predictNextRound(@Body() predictNextDto: PredictNextDto): Promise<{ message: string; jobId: string | number }> {
-    const job = await this.gameService.queuePredictionJob(predictNextDto); // FIX: Get the job object
+    const job = await this.gameService.queuePredictionJob(predictNextDto);
     return {
       message: 'Prediction request accepted. Processing in the background.',
-      jobId: job.id, // FIX: Access the id property
+      // FIX: The job ID from bullmq can be a string or number, but might be undefined.
+      // We default to 'unknown' if it's not present.
+      jobId: job.id as string | number || 'unknown',
     };
   }
 }
