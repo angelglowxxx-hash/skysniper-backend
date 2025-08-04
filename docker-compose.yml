@@ -1,0 +1,80 @@
+# docker-compose.yml
+
+# This file defines and orchestrates the services needed for local development.
+# Run 'docker-compose up -d' to start everything.
+# Run 'docker-compose down' to stop and remove containers.
+
+version: '3.8'
+
+services:
+  # -----------------------------------------------------------------
+  # 1. The SkySniper NestJS Application Service
+  # -----------------------------------------------------------------
+  app:
+    # Build the image using the Dockerfile in the current directory.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Override the production CMD from the Dockerfile for development.
+    # This command starts the server in "watch mode" for hot-reloading.
+    command: npm run start:dev
+    # The app depends on the database and cache being healthy before it starts.
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    # Map the container's port 8080 to the host's port 8080.
+    ports:
+      - "8080:8080"
+    # Mount the source code directory into the container.
+    # This allows NestJS's watch mode to see file changes and restart the server.
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    # Load environment variables from the .env file.
+    env_file:
+      - .env
+
+  # -----------------------------------------------------------------
+  # 2. The PostgreSQL Database Service
+  # -----------------------------------------------------------------
+  db:
+    # Use a lightweight, official PostgreSQL image.
+    image: postgres:15-alpine
+    # Load database credentials from the .env file.
+    # IMPORTANT: Your .env must have POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    env_file:
+      - .env
+    # Map the port so you can connect to the DB from your local machine (e.g., with Prisma Studio).
+    ports:
+      - "5432:5432"
+    # Persist database data on your host machine so it's not lost when you stop the container.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # A healthcheck ensures the database is fully ready to accept connections before other services start.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------------
+  # 3. The Redis Cache & Job Queue Service
+  # -----------------------------------------------------------------
+  cache:
+    # Use a lightweight, official Redis image.
+    image: redis:7-alpine
+    # Start Redis server and require a password for security, loading it from the .env file.
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    # Map the port for potential debugging from the host.
+    ports:
+      - "6379:6379"
+    # Persist Redis data across restarts.
+    volumes:
+      - redis_data:/data
+
+# Define the named volumes used for data persistence.
+volumes:
+  postgres_data:
+  redis_data:
