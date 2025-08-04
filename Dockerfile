@@ -1,13 +1,11 @@
-# Dockerfile (Updated to use npm)
+# Dockerfile (Final Version)
 
 # --------------------------------------------------------------------
 # Stage 1: Builder
 # --------------------------------------------------------------------
 FROM node:20-alpine AS builder
 WORKDIR /app
-# Copy package.json and the npm lock file
 COPY package*.json ./
-# Use npm to install all dependencies
 RUN npm install
 COPY . .
 RUN npx prisma generate
@@ -18,23 +16,26 @@ RUN npm run build
 # --------------------------------------------------------------------
 FROM node:20-alpine
 WORKDIR /app
-RUN addgroup -S node && adduser -S node -G node
 
-# Copy package definitions
+# The 'node' user already exists in the base image, so we don't need to create it.
+# The following line has been REMOVED:
+# RUN addgroup -S node && adduser -S node -G node
+
 COPY package*.json ./
-# Use 'npm ci' which is the standard, faster way to install from a lock file in production
 RUN npm ci --only=production
 
-# Copy compiled code and prisma assets from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy and make the startup script executable
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
+# We still need to change ownership of the files to the existing 'node' user.
 RUN chown -R node:node /app
+
+# We still switch to the non-root 'node' user for security.
 USER node
+
 EXPOSE 8080
 CMD ["./entrypoint.sh"]
