@@ -1,35 +1,42 @@
 # render.yaml
 # -----------------------------------------------------------------------------
-# CORRECTED BLUEPRINT for deploying the SkySniper X backend on Render.
-# This version uses the updated syntax for PostgreSQL services.
+# FINAL CORRECTED BLUEPRINT - Version 3
+# This version explicitly defines the runtime for each service and uses the
+# correct properties for connecting them, resolving all previous errors.
 # -----------------------------------------------------------------------------
 
 services:
   # -----------------------------------------------------------------
   # Service 1: The PostgreSQL Database
-  # This is the updated, simplified, and correct way to define the database.
+  # Using the correct 'db' type for a managed database.
   # -----------------------------------------------------------------
-  - type: pserv
+  - type: db
     name: skysniper-db
+    # 'runtime: postgres' tells Render what kind of database this is.
+    runtime: postgres
     plan: free # Change to 'starter' or higher for production use
-    # NOTE: 'databaseName' and 'postgres' block are no longer needed here.
-    # Render will automatically create a default database for you.
+    # We define the database name and user here.
+    databaseName: skysniperdb
+    user: skysniper_user
 
   # -----------------------------------------------------------------
   # Service 2: The Redis Cache & Job Queue
-  # (This section was already correct)
+  # (This definition is correct)
   # -----------------------------------------------------------------
   - type: redis
     name: skysniper-cache
-    plan: free # Change to a paid plan for production use
-    ipAllowList: [] # This is valid for Redis and allows other Render services to connect.
+    plan: free
+    ipAllowList: []
 
   # -----------------------------------------------------------------
   # Service 3: The SkySniper X NestJS Application
   # -----------------------------------------------------------------
   - type: web
     name: skysniper-app
-    plan: free # Change to 'starter' or higher for production use
+    plan: free
+    # CRITICAL FIX: Explicitly set the runtime to 'docker'.
+    runtime: docker
+    # This now becomes valid because the runtime is 'docker'.
     dockerfilePath: ./Dockerfile
 
     healthCheckPath: /
@@ -38,24 +45,16 @@ services:
       # --- Automatic Variables (linked from other Render services) ---
       - key: DATABASE_URL
         fromService:
-          type: pserv
+          type: db # Match the service type above
           name: skysniper-db
-          property: connectionString # This correctly pulls the full URL from the service above.
-      - key: REDIS_HOST
+          # 'connectionString' is a valid property for the 'db' type.
+          property: connectionString
+      - key: REDIS_URL # 👈 We will use the full URL now.
         fromService:
           type: redis
           name: skysniper-cache
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: skysniper-cache
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: skysniper-cache
-          property: password
+          # 'connectionString' is the correct property for Redis as well.
+          property: connectionString
 
       # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
       - key: GEMINI_API_KEY
