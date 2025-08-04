@@ -1,13 +1,17 @@
-# Dockerfile (Final Version - Updated)
+# Dockerfile (DEFINITIVE, FINAL VERSION FOR PRISMA COMPATIBILITY)
 
 # --------------------------------------------------------------------
 # Stage 1: Builder
-# This stage installs all dependencies and compiles the application.
+# Use the 'slim' variant of the Node image. It is based on Debian, which
+# has much better library compatibility than Alpine Linux for binaries like Prisma's engine.
 # --------------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+
+# DEFINITIVE FIX: Install the specific OpenSSL library that Prisma requires to run reliably.
+RUN apt-get update && apt-get install -y openssl
+
 WORKDIR /app
 COPY package*.json ./
-# Use 'npm install' to get all dependencies needed for the build (including devDependencies).
 RUN npm install
 COPY . .
 RUN npx prisma generate
@@ -15,38 +19,31 @@ RUN npm run build
 
 # --------------------------------------------------------------------
 # Stage 2: Production
-# This stage creates the final, lightweight, and secure image.
+# Use the same 'slim' base for the final image.
 # --------------------------------------------------------------------
-FROM node:20-alpine
+FROM node:20-slim
+
+# DEFINITIVE FIX: Install the same OpenSSL library in the final production image.
+# Clean up the apt cache afterwards to keep the image size small.
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy package definitions.
 COPY package*.json ./
-
-# CRITICAL FIX: Use 'npm install' instead of 'npm ci'.
-# 'npm install' is more lenient if the lock file is missing but will use it if present.
-# '--only=production' ensures we only install production dependencies, keeping the image small.
 RUN npm install --only=production
 
-# Copy the compiled application code from the 'builder' stage.
 COPY --from=builder /app/dist ./dist
-
-# Copy the Prisma schema and the generated client for runtime.
 COPY --from=builder /app/prisma ./prisma
+# This next line is critical for Prisma to find its engine at runtime
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy and make the startup script executable.
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
-# Change ownership of all application files to the non-root 'node' user.
+# The 'node' user is pre-built into the slim image.
+# We just need to change ownership of our app files.
 RUN chown -R node:node /app
-
-# Switch to the non-root 'node' user for enhanced security.
 USER node
 
-# Expose the port the application will run on.
 EXPOSE 8080
-
-# The command to run when the container starts.
 CMD ["./entrypoint.sh"]
