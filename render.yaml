@@ -1,4 +1,4 @@
-# render.yaml (DEFINITIVE, FINAL VERSION USING RENDER'S DATABASE)
+# render.yaml (DEFINITIVE, FINAL VERSION - CORRECT PROPERTY)
 
 # We declare our managed database in its own top-level block.
 databases:
@@ -26,11 +26,11 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: skysniper-db
-          property: connectionString
-      - key: DIRECT_URL # We still provide both URLs for Prisma
+          property: connectionString # This is the correct property for the runtime URL
+      - key: DIRECT_URL
         fromDatabase:
           name: skysniper-db
-          property: internalConnectionString # Use internal for migrations
+          property: connectionString # DEFINITIVE FIX: Use the same correct property for the direct/migration URL
       - key: REDIS_URL
         fromService:
           type: redis
@@ -38,9 +38,9 @@ services:
           property: connectionString
 
       # --- Manual Secret Variables ---
-      - key: AIzaSyC6ZjLR3mtq4odTY9q2AhqNG2v7uzvh9r0
+      - key: GEMINI_API_KEY
         sync: false
-      - key: 9907113529
+      - key: ADMIN_TOKEN
         sync: false
 
       # --- Standard Variables ---
