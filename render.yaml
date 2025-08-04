@@ -1,55 +1,43 @@
-# render.yaml
-# -----------------------------------------------------------------------------
-# FINAL, DEFINITIVE BLUEPRINT - Version 5
-# This version correctly separates Databases from Services, which is the
-# proper way to define infrastructure in a Render blueprint.
-# -----------------------------------------------------------------------------
+# render.yaml (DEFINITIVE, FINAL VERSION USING RENDER'S DATABASE)
 
-# We declare our managed databases in their own top-level block.
+# We declare our managed database in its own top-level block.
 databases:
   - name: skysniper-db
-    plan: free # Change to 'starter' or higher for production use
-    # We specify the initial database name and user to be created.
+    plan: free
     databaseName: skysniperdb
     user: skysniper_user
 
-# We declare our running services (web apps, workers, redis) in this block.
 services:
-  # -----------------------------------------------------------------
-  # Service 1: The Redis Cache & Job Queue
-  # -----------------------------------------------------------------
+  # Redis service remains the same
   - type: redis
     name: skysniper-cache
     plan: free
-    ipAllowList: [] # Allows connections from other services in our account.
+    ipAllowList: []
 
-  # -----------------------------------------------------------------
-  # Service 2: The SkySniper X NestJS Application
-  # -----------------------------------------------------------------
+  # Web service remains the same
   - type: web
     name: skysniper-app
     plan: free
-    # We explicitly tell Render this is a Docker-based service.
     runtime: docker
     dockerfilePath: ./Dockerfile
-
     healthCheckPath: /
-
     envVars:
-      # --- Automatic Variables (linked from other resources) ---
+      # --- Automatic Variables (linked from Render's own resources) ---
       - key: DATABASE_URL
-        # We use 'fromDatabase' to link to our managed database.
         fromDatabase:
           name: skysniper-db
           property: connectionString
+      - key: DIRECT_URL # We still provide both URLs for Prisma
+        fromDatabase:
+          name: skysniper-db
+          property: internalConnectionString # Use internal for migrations
       - key: REDIS_URL
-        # We use 'fromService' to link to our Redis service.
         fromService:
           type: redis
           name: skysniper-cache
           property: connectionString
 
-      # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
+      # --- Manual Secret Variables ---
       - key: GEMINI_API_KEY
         sync: false
       - key: ADMIN_TOKEN
