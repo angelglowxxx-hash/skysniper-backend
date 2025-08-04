@@ -38,9 +38,9 @@ services:
           property: connectionString
 
       # --- Manual Secret Variables ---
-      - key: GEMINI_API_KEY
+      - key: AIzaSyC6ZjLR3mtq4odTY9q2AhqNG2v7uzvh9r0
         sync: false
-      - key: ADMIN_TOKEN
+      - key: 9907113529
         sync: false
 
       # --- Standard Variables ---
