@@ -1,34 +1,28 @@
 # render.yaml
 # -----------------------------------------------------------------------------
-# This is the MASTER BLUEPRINT for deploying the SkySniper X backend on Render.
-# It defines all necessary cloud services and links them together automatically.
+# CORRECTED BLUEPRINT for deploying the SkySniper X backend on Render.
+# This version uses the updated syntax for PostgreSQL services.
 # -----------------------------------------------------------------------------
 
 services:
   # -----------------------------------------------------------------
-  # Service 1: The PostgreSQL Database (from Supabase or Render)
+  # Service 1: The PostgreSQL Database
+  # This is the updated, simplified, and correct way to define the database.
   # -----------------------------------------------------------------
-  # OPTION A: If you want Render to manage your database (Recommended for simplicity)
   - type: pserv
     name: skysniper-db
     plan: free # Change to 'starter' or higher for production use
-    postgres:
-      version: 15
-    # This automatically creates a database named 'skysniperdb'
-    databaseName: skysniperdb
-    ipAllowList: [] # Allows connections from other Render services
-
-  # OPTION B: If you are using an EXTERNAL Supabase database, you would DELETE
-  # the 'skysniper-db' service above and set the DATABASE_URL manually
-  # in the skysniper-app environment variables in the Render dashboard.
+    # NOTE: 'databaseName' and 'postgres' block are no longer needed here.
+    # Render will automatically create a default database for you.
 
   # -----------------------------------------------------------------
   # Service 2: The Redis Cache & Job Queue
+  # (This section was already correct)
   # -----------------------------------------------------------------
   - type: redis
     name: skysniper-cache
     plan: free # Change to a paid plan for production use
-    ipAllowList: [] # Allows connections from other Render services
+    ipAllowList: [] # This is valid for Redis and allows other Render services to connect.
 
   # -----------------------------------------------------------------
   # Service 3: The SkySniper X NestJS Application
@@ -36,22 +30,17 @@ services:
   - type: web
     name: skysniper-app
     plan: free # Change to 'starter' or higher for production use
-    # Tell Render to build and run our application using its Dockerfile.
     dockerfilePath: ./Dockerfile
-    # Render will automatically run the command from our entrypoint.sh script.
 
-    # A health check path ensures your service is alive and ready.
-    # Our NestJS app will have a root route by default.
     healthCheckPath: /
-    
-    # Environment variables are the key to connecting all services.
+
     envVars:
       # --- Automatic Variables (linked from other Render services) ---
       - key: DATABASE_URL
         fromService:
           type: pserv
           name: skysniper-db
-          property: connectionString
+          property: connectionString # This correctly pulls the full URL from the service above.
       - key: REDIS_HOST
         fromService:
           type: redis
@@ -69,7 +58,6 @@ services:
           property: password
 
       # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
-      # 'sync: false' tells Render not to store the value in this YAML file.
       - key: GEMINI_API_KEY
         sync: false
       - key: ADMIN_TOKEN
@@ -77,6 +65,6 @@ services:
 
       # --- Standard Variables ---
       - key: PORT
-        value: 8080 # This must match the port EXPOSEd in our Dockerfile.
+        value: 8080
       - key: NODE_ENV
         value: production
