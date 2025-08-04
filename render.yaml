@@ -39,12 +39,11 @@ services:
 
       # --- Manual Secret Variables (you MUST set these in the Render dashboard) ---
       # 'sync: false' is critical. It tells Render you will provide these securely.
-      - key: "postgres://postgres:@#Roni123@db.eipwtuojyimfisucaxnv.supabase.co:5432/postgres"
-
+      - key: DATABASE_URL # Your Supabase Postgres connection string
         sync: false
-      - key: AIzaSyC6ZjLR3mtq4odTY9q2AhqNG2v7uzvh9r0
+      - key: GEMINI_API_KEY # Your NEW Gemini API key
         sync: false
-      - key: 9907113529
+      - key: ADMIN_TOKEN # Your NEW, strong admin token
         sync: false
 
       # --- Standard Variables ---
