@@ -1,0 +1,95 @@
+// prisma/schema.prisma
+
+// This schema is the single source of truth for your Supabase PostgreSQL database.
+// It defines the tables, columns, and relationships for your application's data.
+
+// Specifies that we will generate a TypeScript client.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Defines the connection to our database.
+// The URL will be loaded from the .env file.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ====================================================================
+//                            DATA MODELS
+// ====================================================================
+
+
+// Stores the unique structure of each website SkySniper learns.
+// This is the core of our "auto-detect" system.
+model SiteFingerprint {
+  id        String   @id @default(cuid())
+  siteUrl   String   @unique // We only want one fingerprint per site URL.
+  gameType  String?  // e.g., "Crash", "Mines". Can be null until AI identifies it.
+  
+  // The CSS selectors needed to scrape data. Stored as flexible JSON.
+  // Example: { "result": ".selector", "roundId": "#selector", "hash": ".selector" }
+  selectors Json?
+  
+  // Status fields for our "auto-repair" system.
+  isStable  Boolean  @default(true)
+  missCount Int      @default(0) // How many times have the selectors failed?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // A fingerprint can have many game configurations.
+  gameConfigs GameConfig[]
+}
+
+
+// Stores AI-generated predictions for historical analysis.
+model PredictionLog {
+  id             String   @id @default(cuid())
+  roundId        String?  // Some games might not have a clear round ID.
+  hash           String?
+  siteUrl        String
+  predictedAt    DateTime @default(now())
+  
+  // The full prediction data from the AI.
+  // Example: { "next_prediction": 2.76, "tag": "safe", "pattern_analysis": "..." }
+  predictionData Json
+}
+
+
+// Stores dynamic UI configurations that can be pushed to users from the admin panel.
+model GameConfig {
+  id        String   @id @default(cuid())
+  game      String
+  
+  // The full UI configuration for a specific game on a site.
+  // Example: { "layout": "pro", "theme": "neon", "modules": ["predictor", "live_graph"] }
+  config    Json
+  
+  createdAt DateTime @default(now())
+
+  // --- This sets up the relationship between GameConfig and SiteFingerprint ---
+  fingerprintId String
+  fingerprint   SiteFingerprint @relation(fields: [fingerprintId], references: [id], onDelete: Cascade)
+}
+
+
+// Logs important system events and errors for the admin panel's "System Alerts".
+model SystemAlert {
+  id        String    @id @default(cuid())
+  type      AlertType // Using an Enum for predefined alert types.
+  message   String
+  metadata  Json?     // Extra data for debugging (e.g., the failed hash).
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+
+// Defines the allowed values for the SystemAlert 'type' field.
+enum AlertType {
+  AI_ERROR
+  SELECTOR_MISS
+  DATABASE_ERROR
+  QUEUE_ERROR
+}
